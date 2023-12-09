@@ -1,32 +1,28 @@
-// but useful for running the script in a standalone fashion through `node <script>`.
-//
-// You can also run a script with `npx hardhat run <script>`. If you do that, Hardhat
-// will compile your contracts, add the Hardhat Runtime Environment's members to the
-// global scope, and execute the script.
 const hre = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+    // Deploy MyERC721
+    const MyERC721 = await hre.ethers.getContractFactory("MyERC721");
+    const myERC721 = await MyERC721.deploy(
 
-  const lockedAmount = hre.ethers.parseEther("0.001");
+    );
+     await myERC721.waitForDeployment(); // This waits for the contract to be deployed
+    console.log("MyERC721 deployed to:", myERC721.target);
 
-  const lock = await hre.ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
+    // Deploy MyERC1155
+    const MyERC1155 = await hre.ethers.getContractFactory("MyERC1155");
+    const myERC1155 = await MyERC1155.deploy();
+    await myERC1155.waitForDeployment(); // This waits for the contract to be deployed
+    console.log("MyERC1155 deployed to:", myERC1155.target);
 
-  await lock.waitForDeployment();
-
-  console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
-  );
+    // Deploy TicketingPlatform with the addresses of MyERC721 and MyERC1155
+    const TicketingPlatform = await hre.ethers.getContractFactory("TicketingPlatform");
+    const ticketingPlatform = await TicketingPlatform.deploy(myERC721.target, myERC1155.target);
+     await ticketingPlatform.waitForDeployment(); // This waits for the contract to be deployed
+    console.log("TicketingPlatform deployed to:", ticketingPlatform.target);
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+    console.error(error);
+    process.exitCode = 1;
 });
